@@ -1,0 +1,5 @@
+app/config.yml
+app/configBot.yml
+app/*.png
+tests/
+.idea/
