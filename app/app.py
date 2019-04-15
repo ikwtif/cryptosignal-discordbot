@@ -6,7 +6,7 @@ import json
 import aiodocker
 import asyncio
 from tornado.options import define, options
-
+from jinja2 import Template
 from pprint import pprint
 from conf import Configuration
 import discord
@@ -19,10 +19,11 @@ def config():
     conf = Configuration()
     settings = conf.settings
     discordbot = conf.discordbot
-    return settings, discordbot
+    indicator_message = conf.message
+    return settings, discordbot, indicator_message
 
 
-settings, discordbot = config()
+settings, discordbot, indicator_message = config()
 
 
 @bot.event
@@ -37,23 +38,45 @@ async def on_ready():
     await channel.send('Hello hello!')
 
 
+def _indicator_message_templater(indicator):
+    message_template = Template(indicator_message['indicator_message'])
+    new_message = str()
+    status, last_status, values, candle_period, period_count = (str() for i in range(5))
+    try:
+        status = indicator['status']
+        last_status = indicator['last_status']
+        values = indicator['values'][indicator['indicator']]
+        candle_period = str(indicator['analysis']['config']['candle_period'])
+        period_count = str(indicator['analysis']['config']['period_count'])
+    except:
+        pass
+
+    new_message += message_template.render(status=status,
+                                           last_status=last_status,
+                                           values=values,
+                                           candle_period=candle_period,
+                                           period_count=period_count)
+    return new_message
+
+
+
 async def parse_message(messages, fh):
     await save_content(messages)
     channel = bot.get_channel(discordbot['channel_id'])
     chart = discord.File(fp="{}.png".format(fh))
-    await channel.send(file=chart)
     to_send = discord.Embed(title="Pair {} on exchange {}".format(messages[0]['market'], messages[0]['exchange'],
                                                                   type="rich"))
-    for message in messages:
-        to_send.add_field(name=message['indicator'], value=message["values"][message["indicator"]], inline=False)
+    for indicator in messages:
+        message = _indicator_message_templater(indicator)
+        to_send.add_field(name=indicator['indicator'], value=message, inline=False)
 
-    await channel.send(embed=to_send)
+    await channel.send(embed=to_send, file=chart)
 
 
 async def save_content(messages):
-    with open('message.txt', 'wt') as out:
+    with open('messages.txt', 'wt') as out:
         pprint(messages, stream=out)
-        print("printing message recieved")
+        print("printing message recieved and saved in messages.txt")
 
 
 class MainHandler(tornado.web.RequestHandler):
