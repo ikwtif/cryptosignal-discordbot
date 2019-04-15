@@ -4,3 +4,6 @@ settings:
 discordbot:
   token:
   channel_id:
+
+message:
+  indicator_template: "value: {{values}} \n status: {{status}} \n period: {{period_count}} and candles: {{candle_period}}"
