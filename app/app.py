@@ -39,7 +39,7 @@ async def on_ready():
 
 
 def _indicator_message_templater(indicator):
-    message_template = Template(indicator_message['indicator_message'])
+    message_template = Template(indicator_message['indicator_template'])
     new_message = str()
     status, last_status, values, candle_period, period_count = (str() for i in range(5))
     try:
