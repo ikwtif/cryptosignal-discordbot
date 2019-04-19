@@ -25,5 +25,9 @@ class Configuration():
 
         if 'discordbot' in user_config:
             self.discordbot = user_config['discordbot']
+
+        if 'docker' in user_config:
+            self.docker = user_config['docker']
+
         else:
             raise Exception("no bot configured")
