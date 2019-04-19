@@ -1,6 +1,10 @@
 settings:
   test: null
 
+docker:
+  image: false
+  image_name:
+
 discordbot:
   token:
   channel_id:
