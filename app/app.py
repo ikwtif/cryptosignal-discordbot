@@ -172,5 +172,5 @@ if __name__ == "__main__":
     run_tornado()
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(run_discordbot())
-    #asyncio.ensure_future(run_docker())
+    asyncio.ensure_future(run_docker())
     loop.run_forever()
