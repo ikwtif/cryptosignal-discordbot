@@ -6,4 +6,5 @@ discordbot:
   channel_id:
 
 message:
+  title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}}"
   indicator_template: "value: {{values}} \n status: {{status}} \n period: {{period_count}} and candles: {{candle_period}}"

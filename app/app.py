@@ -19,11 +19,11 @@ def config():
     conf = Configuration()
     settings = conf.settings
     discordbot = conf.discordbot
-    indicator_message = conf.message
-    return settings, discordbot, indicator_message
+    message_templater = conf.message
+    return settings, discordbot, message_templater
 
 
-settings, discordbot, indicator_message = config()
+settings, discordbot, message_templater = config()
 
 
 @bot.event
@@ -38,10 +38,36 @@ async def on_ready():
     await channel.send('Hello hello!')
 
 
+def _title_message_templater(messages):
+
+    message_template = Template(message_templater['title_template'])
+    new_title = str()
+    base_currency, quote_currency, market, date, exchange, prices = (str() for i in range(6))
+
+    try:
+        base_currency = messages[0]['base_currency']
+        quote_currency = messages[0]['quote_currency']
+        market = messages[0]['market']
+        date = messages[0]['creation_date']
+        exchange = messages[0]['exchange']
+        prices = messages[0]['prices']
+    except:
+        pass
+
+    new_title += message_template.render(base_currency=base_currency,
+                                         quote_currency=quote_currency,
+                                         market=market,
+                                         date=date,
+                                         exchange=exchange,
+                                         prices=prices)
+    return new_title
+
+
 def _indicator_message_templater(indicator):
-    message_template = Template(indicator_message['indicator_template'])
+    message_template = Template(message_templater['indicator_template'])
     new_message = str()
     status, last_status, values, candle_period, period_count = (str() for i in range(5))
+
     try:
         status = indicator['status']
         last_status = indicator['last_status']
@@ -59,13 +85,13 @@ def _indicator_message_templater(indicator):
     return new_message
 
 
-
 async def parse_message(messages, fh):
     await save_content(messages)
     channel = bot.get_channel(discordbot['channel_id'])
     chart = discord.File(fp="{}.png".format(fh))
-    to_send = discord.Embed(title="Pair {} on exchange {}".format(messages[0]['market'], messages[0]['exchange'],
-                                                                  type="rich"))
+    title = _title_message_templater(messages)
+    to_send = discord.Embed(title=title,
+                            type="rich")
     for indicator in messages:
         message = _indicator_message_templater(indicator)
         to_send.add_field(name=indicator['indicator'], value=message, inline=False)
@@ -96,6 +122,7 @@ class MainHandler(tornado.web.RequestHandler):
         fh.write(fileinfo['body'])
 
         await parse_message(json.loads(msg), fname)
+
 
     def get(self):
         print("Get Request")
