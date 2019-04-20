@@ -5,6 +5,7 @@ import tornado.platform.asyncio
 import json
 import aiodocker
 import asyncio
+import re
 from tornado.options import define, options
 from jinja2 import Template
 from pprint import pprint
@@ -38,11 +39,16 @@ async def on_ready():
     await channel.send('Hello hello!')
 
 
+def _find_number(prices, text):
+    f = re.search(text, prices  )
+    return f.group(1)
+
+
 def _title_message_templater(messages):
 
     message_template = Template(message_templater['title_template'])
     new_title = str()
-    base_currency, quote_currency, market, date, exchange, prices = (str() for i in range(6))
+    base_currency, quote_currency, market, date, exchange, prices, price_high, price_low, price_close = (str() for i in range(9))
 
     try:
         base_currency = messages[0]['base_currency']
@@ -51,6 +57,10 @@ def _title_message_templater(messages):
         date = messages[0]['creation_date']
         exchange = messages[0]['exchange']
         prices = messages[0]['prices']
+        price_high = _find_number(prices, 'High: (\d+.)*\d+')
+        price_low = _find_number(prices, 'Low: (\d+.)*\d+')
+        price_close = _find_number(prices, 'Close: (\d+.)*\d+')
+
     except:
         pass
 
@@ -59,7 +69,10 @@ def _title_message_templater(messages):
                                          market=market,
                                          date=date,
                                          exchange=exchange,
-                                         prices=prices)
+                                         prices=prices,
+                                         price_high=price_high,
+                                         price_low=price_low,
+                                         price_close=price_close)
     return new_title
 
 
@@ -159,5 +172,5 @@ if __name__ == "__main__":
     run_tornado()
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(run_discordbot())
-    asyncio.ensure_future(run_docker())
+    #asyncio.ensure_future(run_docker())
     loop.run_forever()
