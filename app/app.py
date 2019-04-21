@@ -84,7 +84,10 @@ def _indicator_message_templater(indicator):
     try:
         status = indicator['status']
         last_status = indicator['last_status']
-        values = indicator['values'][indicator['indicator']]
+        if len(indicator['values'].keys()) > 1:
+            values = indicator['values']
+        else:
+            values = indicator['values'][indicator['indicator']]
         candle_period = str(indicator['analysis']['config']['candle_period'])
         period_count = str(indicator['analysis']['config']['period_count'])
     except:
