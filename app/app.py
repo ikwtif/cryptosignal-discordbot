@@ -33,14 +33,14 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
 
-    channel = bot.get_channel(discordbot['channel_id'])
+    channel = bot.get_channel(discordbot['channels']['channel_main']['id'])
     print('Using chanel ', str(channel))
 
     await channel.send('Hello hello!')
 
 
 def _find_number(prices, text):
-    f = re.search(text, prices  )
+    f = re.search(text, prices)
     return f.group(1)
 
 
@@ -53,7 +53,7 @@ def _title_message_templater(messages):
     try:
         base_currency = messages[0]['base_currency']
         quote_currency = messages[0]['quote_currency']
-        candle_period = messages[0]['config']['candle_period']
+        candle_period = messages[0]['analysis']['config']['candle_period']
         market = messages[0]['market']
         date = messages[0]['creation_date']
         exchange = messages[0]['exchange']
@@ -62,8 +62,8 @@ def _title_message_templater(messages):
         price_low = _find_number(prices, 'Low: (\d+.)*\d+')
         price_close = _find_number(prices, 'Close: (\d+.)*\d+')
 
-    except:
-        continue
+    except KeyError as error:
+        print('the key {} does not exist'.format(error))
 
     new_title += message_template.render(base_currency=base_currency,
                                          quote_currency=quote_currency,
@@ -93,7 +93,7 @@ def _indicator_message_templater(indicator):
         candle_period = str(indicator['analysis']['config']['candle_period'])
         period_count = str(indicator['analysis']['config']['period_count'])
     except:
-        continue
+        pass
 
     new_message += message_template.render(status=status,
                                            last_status=last_status,
@@ -105,7 +105,6 @@ def _indicator_message_templater(indicator):
 
 async def parse_message(messages, fh):
     await save_content(messages)
-    channel = bot.get_channel(discordbot['channel_id'])
     if discordbot['charts']:
         try:
             chart = discord.File(fp="{}.png".format(fh))
@@ -119,14 +118,24 @@ async def parse_message(messages, fh):
     for indicator in messages:
         message = _indicator_message_templater(indicator)
         to_send.add_field(name=indicator['indicator'], value=message, inline=False)
+    msg_candle_period = messages[0]['analysis']['config']['candle_period']
+
+    channels = discordbot['channels']
+    for chnl in channels.keys():
+        if channels[chnl].get('candle_period') is None:
+            pass
+        else:
+            if msg_candle_period == str(channels[chnl]['candle_period']):
+                channel = bot.get_channel(channels[chnl]['id'])
 
     await channel.send(embed=to_send, file=(chart))
 
 
 async def save_content(messages):
-    with open('messages.txt', 'wt') as out:
+    filename = messages[0]['analysis']['config']['candle_period']
+    with open('{}.txt'.format(filename), 'wt') as out:
         pprint(messages, stream=out)
-        print("printing message recieved and saved in messages.txt")
+        print("printing message recieved and saved in {}.txt".filename)
 
 
 class MainHandler(tornado.web.RequestHandler):
