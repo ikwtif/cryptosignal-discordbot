@@ -2,9 +2,28 @@ settings:
   test: null
 
 discordbot:
+  charts: false
   token:
-  channel_id:
+  channels:
+    channel_main:
+      id:
+    channel_1:
+      candle_period: 1h
+      id:
+    channel_2:
+      candle_period: 4h
+      id:
+    channel_3:
+      candle_period: 1d
+      id:
 
 message:
-  title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}}"
-  indicator_template: "value: {{values}} \n status: {{status}} \n period: {{period_count}} and candles: {{candle_period}}"
+  title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+                  {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+                  {{ '\n' -}} {{date}}
+                  {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}"
+  indicator_template: "value: {{values}}
+                      {{ '\n' -}} status: {{status}}
+                      {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}
+                      {{ '\n' -}} candles: {{candle_period}}"
