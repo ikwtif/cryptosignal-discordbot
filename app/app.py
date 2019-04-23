@@ -92,8 +92,9 @@ def _indicator_message_templater(indicator):
             values = indicator['values'][indicator['indicator']]
         candle_period = str(indicator['analysis']['config']['candle_period'])
         period_count = str(indicator['analysis']['config']['period_count'])
-    except:
-        pass
+
+    except KeyError as error:
+        print('the key {} does not exist'.format(error))
 
     new_message += message_template.render(status=status,
                                            last_status=last_status,
@@ -192,5 +193,5 @@ if __name__ == "__main__":
     run_tornado()
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(run_discordbot())
-    asyncio.ensure_future(run_docker())
+    #asyncio.ensure_future(run_docker())
     loop.run_forever()
