@@ -48,11 +48,12 @@ def _title_message_templater(messages):
 
     message_template = Template(message_templater['title_template'])
     new_title = str()
-    base_currency, quote_currency, market, date, exchange, prices, price_high, price_low, price_close = (str() for i in range(9))
+    base_currency, quote_currency, candle_period, market, date, exchange, prices, price_high, price_low, price_close = (str() for i in range(10))
 
     try:
         base_currency = messages[0]['base_currency']
         quote_currency = messages[0]['quote_currency']
+        candle_period = messages[0]['config']['candle_period']
         market = messages[0]['market']
         date = messages[0]['creation_date']
         exchange = messages[0]['exchange']
@@ -62,10 +63,11 @@ def _title_message_templater(messages):
         price_close = _find_number(prices, 'Close: (\d+.)*\d+')
 
     except:
-        pass
+        continue
 
     new_title += message_template.render(base_currency=base_currency,
                                          quote_currency=quote_currency,
+                                         candle_period=candle_period,
                                          market=market,
                                          date=date,
                                          exchange=exchange,
@@ -91,7 +93,7 @@ def _indicator_message_templater(indicator):
         candle_period = str(indicator['analysis']['config']['candle_period'])
         period_count = str(indicator['analysis']['config']['period_count'])
     except:
-        pass
+        continue
 
     new_message += message_template.render(status=status,
                                            last_status=last_status,
@@ -104,7 +106,13 @@ def _indicator_message_templater(indicator):
 async def parse_message(messages, fh):
     await save_content(messages)
     channel = bot.get_channel(discordbot['channel_id'])
-    chart = discord.File(fp="{}.png".format(fh))
+    if discordbot['charts']:
+        try:
+            chart = discord.File(fp="{}.png".format(fh))
+        except:
+            print('no charts recieved')
+    else:
+        chart = None
     title = _title_message_templater(messages)
     to_send = discord.Embed(title=title,
                             type="rich")
@@ -112,7 +120,7 @@ async def parse_message(messages, fh):
         message = _indicator_message_templater(indicator)
         to_send.add_field(name=indicator['indicator'], value=message, inline=False)
 
-    await channel.send(embed=to_send, file=chart)
+    await channel.send(embed=to_send, file=(chart))
 
 
 async def save_content(messages):
