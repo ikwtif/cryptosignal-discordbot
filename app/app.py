@@ -21,7 +21,7 @@ def config():
     settings = conf.settings
     discordbot = conf.discordbot
     message_templater = conf.message
-    return settings, discordbot, message_templater
+    return settings, discordbot, message_templater, dockerimage
 
 
 settings, discordbot, message_templater = config()
@@ -165,14 +165,16 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 async def run_docker():
-    print('running docker')
-    docker = aiodocker.Docker()
-    img = 'dev/cryptosignals:latest'
-    container = await docker.containers.create_or_replace(
-        config={'Cmd': ["/usr/local/bin/python", "app.py"], 'Image': img},
-        name='crypto-signal')
-    print("created and started container {}".format(container._id[:12]))
-    await container.start()
+    if dockerimage['image']:
+        print('running docker')
+        docker = aiodocker.Docker()
+        container = await docker.containers.create_or_replace(
+            config={'Cmd': ["/usr/local/bin/python", "app.py"], 'Image': dockerimage['image_name']},
+            name='crypto-signal')
+        print("created and started container {}".format(container._id[:12]))
+        await container.start()
+    else:
+        print('continuing without docker container creation')
 
 
 def run_tornado():
