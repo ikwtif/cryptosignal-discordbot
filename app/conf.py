@@ -31,3 +31,8 @@ class Configuration():
 
         else:
             raise Exception("no bot configured")
+
+        if 'message' in user_config:
+            self.message = user_config['message']
+        else:
+            raise Exception("no message configured")
