@@ -136,7 +136,7 @@ async def save_content(messages):
     filename = messages[0]['analysis']['config']['candle_period']
     with open('{}.txt'.format(filename), 'wt') as out:
         pprint(messages, stream=out)
-        print("printing message recieved and saved in {}.txt".filename)
+        print("printing message recieved and saved in {}.txt".format(filename))
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -193,5 +193,5 @@ if __name__ == "__main__":
     run_tornado()
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(run_discordbot())
-    #asyncio.ensure_future(run_docker())
+    asyncio.ensure_future(run_docker())
     loop.run_forever()
