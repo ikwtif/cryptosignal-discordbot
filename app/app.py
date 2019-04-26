@@ -21,10 +21,11 @@ def config():
     settings = conf.settings
     discordbot = conf.discordbot
     message_templater = conf.message
+    dockerimage = conf.docker
     return settings, discordbot, message_templater, dockerimage
 
 
-settings, discordbot, message_templater = config()
+settings, discordbot, message_templater, dockerimage = config()
 
 
 @bot.event
