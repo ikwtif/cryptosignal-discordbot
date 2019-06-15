@@ -1,4 +1,4 @@
-# Project Title
+# Cryptosignal-discordbot
 
 Discordbot setup for use with CryptoSignal Development branch (https://github.com/CryptoSignal/crypto-signal/tree/develop)
 
@@ -9,9 +9,13 @@ If you want to use it with a docker image
 
 Set up a docker image from CryptoSignal development branch (https://github.com/CryptoSignal/crypto-signal)
 Building the docker image (config file used should be inside app folder when building image):
+
   In the dockerfile add the following line
+  
     `ADD app/ /app`
+    
   Then build image with:
+  
     `docker build . -t [your image name]`
 
 
