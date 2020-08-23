@@ -4,7 +4,8 @@
 import os
 import yaml
 
-class Configuration():
+
+class Configuration:
     """Parses the environment configuration to create the config objects.
     """
 

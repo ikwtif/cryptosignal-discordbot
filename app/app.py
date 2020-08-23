@@ -1,25 +1,29 @@
-import tornado.ioloop
-import tornado.options
+
 import tornado.web
-import tornado.platform.asyncio
 import json
-import aiodocker
 import asyncio
 import re
-from tornado.options import define, options
 from jinja2 import Template
 from pprint import pprint
 from conf import Configuration
-from io import BytesIO
-from aiodocker import utils
 import discord
 from discord.ext import commands
-from datetime import datetime, timedelta
+from datetime import datetime
 import platform
 import sys
+import tornado.web
+import aiodocker
+import discord
+from discord.ext import commands
 
-bot = commands.Bot(command_prefix='>')
 
+
+# # monkey patch du to 3.8 breaking change
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+# bot setup
+bot = commands.Bot(command_prefix="!")
 
 def config():
     conf = Configuration()
@@ -32,29 +36,20 @@ def config():
 
 settings, discordbot, message_templater, dockerimage = config()
 
-
 @bot.event
 async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-
-    channel = bot.get_channel(discordbot['channels']['channel_main']['id'])
-    print('Using chanel ', str(channel))
-
-    await channel.send('Hello hello!')
+    print("the bot is ready")
 
 @bot.command()
 async def clear(ctx, amount=100):
     await ctx.channel.purge(limit=amount)
 
+@bot.command()
+async def test(ctx):
+    await ctx.send("it works")
 
-post_time = datetime.utcnow()
-print(post_time)
-#trigger = 0
 
 async def clear_messages(amount=100):
-
     chnls = list()
     for channel in discordbot['channels'].keys():
         if channel == 'channel_main':
@@ -68,13 +63,13 @@ async def clear_messages(amount=100):
         print('deleting messages in channel: {}'.format(channel))
         await channelid.delete_messages(messages)
 
+
 def _find_number(prices, text):
     f = re.search(text, prices)
     return f.group(1)
 
 
 def _title_message_templater(messages):
-
     message_template = Template(message_templater['title_template'])
     new_title = str()
     base_currency, quote_currency, candle_period, market, date, exchange, prices, price_high, price_low, price_close = (str() for i in range(10))
@@ -107,6 +102,13 @@ def _title_message_templater(messages):
     return new_title
 
 
+def save_content(messages):
+    filename = messages[0]['analysis']['config']['candle_period']
+    with open('{}.txt'.format(filename), 'wt') as out:
+        pprint(messages, stream=out)
+        print("printing message recieved and saved in {}.txt".format(filename))
+
+
 def _indicator_message_templater(indicator):
     message_template = Template(message_templater['indicator_template'])
     new_message = str()
@@ -130,10 +132,10 @@ def _indicator_message_templater(indicator):
     return new_message
 
 
-
-
 async def parse_message(messages, fh):
-    await save_content(messages)
+    print(type(messages))
+    print('mess', messages)
+    save_content(messages)
 
     if discordbot['charts']:
         try:
@@ -149,7 +151,7 @@ async def parse_message(messages, fh):
         message = _indicator_message_templater(indicator)
         to_send.add_field(name=indicator['indicator'], value=message, inline=False)
     msg_candle_period = messages[0]['analysis']['config']['candle_period']
-
+    channel = None
     channels = discordbot['channels']
     for chnl in channels.keys():
         if channels[chnl].get('candle_period') is None:
@@ -157,43 +159,20 @@ async def parse_message(messages, fh):
             pass
         else:
             if msg_candle_period == str(channels[chnl]['candle_period']):
+                print('same')
                 channel = bot.get_channel(channels[chnl]['id'])
+                break
+            elif msg_candle_period != str(channels[chnl]['candle_period']):
+                print('not same')
+
+    if channel is None:
+        channel = bot.get_channel(channels['channel_5']['id'])
 
     await channel.send(embed=to_send, file=(chart))
 
 
-async def save_content(messages):
-    filename = messages[0]['analysis']['config']['candle_period']
-    with open('{}.txt'.format(filename), 'wt') as out:
-        pprint(messages, stream=out)
-        print("printing message recieved and saved in {}.txt".format(filename))
-
-
-class MainHandler(tornado.web.RequestHandler):
-
-    async def post(self):
-        print('post request')
-        data = self.get_argument('data', 'No data recieved')
-        self.write(data)
-        msg = self.get_argument('messages', 'No data recieved')
-
-        fileinfo = self.request.files['chart'][0]
-        print('filename is {}, content type: {}'.format(fileinfo['filename'], fileinfo['content_type']))
-        fname = fileinfo['filename']
-        # extn = os.path.splitext(fname)[1]
-        # cname = str(uuid.uuid4()) + extn
-        fh = open("{}.png".format(fname), 'wb')
-        fh.write(fileinfo['body'])
-
-        await parse_message(json.loads(msg), fname)
-
-
-    def get(self):
-        print("Get Request")
-        data = self.get_argument('data', 'No data recieved')
-        self.write(data)
-
 docker = aiodocker.Docker('http://192.168.65.0/28')
+
 
 async def run_docker():
     #await create_image()
@@ -209,30 +188,35 @@ async def run_docker():
         print('continuing without docker container creation')
 
 
-def run_tornado():
-    print("running tornado")
-    define("port", default=9999, help="run ont he given port", type=int)
-    tornado.options.parse_command_line()
-    application = tornado.web.Application([(r"/", MainHandler)])
-    application.listen(options.port)
-    print("Listening on http://localhost:{}".format(options.port))
+# tornado setup
+class MainHandler(tornado.web.RequestHandler):
+    async def post(self):
+        print('post request')
+        data = self.get_argument('data', 'No data recieved')
+        self.write(data)
+        msg = self.get_argument('messages', 'No data recieved')
+
+        fileinfo = self.request.files['chart'][0]
+        print('filename is {}, content type: {}'.format(fileinfo['filename'], fileinfo['content_type']))
+        fname = fileinfo['filename']
+        # extn = os.path.splitext(fname)[1]
+        # cname = str(uuid.uuid4()) + extn
+        fh = open("{}.png".format(fname), 'wb')
+        fh.write(fileinfo['body'])
+        print(msg)
+        await parse_message(json.loads(msg), fname)
+
+    async def get(self):
+        print("Get Request")
+        data = self.get_argument('data', 'No data recieved')
+        self.write(data)
 
 
-async def run_discordbot():
-    print('bot running')
-    await bot.run(discordbot['token'])
-
-
-if __name__ == "__main__":
-    if platform.system() == 'Windows':
-        if sys.version_info.major == 3 and sys.version_info.minor == 8:
-            # {only use for python 3.8 on windows -- used for tornado
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            # }
-            
-    run_tornado()
+if __name__ == '__main__':
+    app = tornado.web.Application([(r"/", MainHandler)])
+    app.listen(9999)
+    print("Listening on http://localhost:{}".format(9999))
     loop = asyncio.get_event_loop()
-    asyncio.ensure_future(run_discordbot())
-    asyncio.ensure_future(run_docker())
+    asyncio.ensure_future(bot.start(discordbot['token']), loop=loop)
     loop.run_forever()
 
