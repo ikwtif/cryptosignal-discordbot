@@ -15,6 +15,8 @@ from aiodocker import utils
 import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
+import platform
+import sys
 
 bot = commands.Bot(command_prefix='>')
 
@@ -222,6 +224,12 @@ async def run_discordbot():
 
 
 if __name__ == "__main__":
+    if platform.system() == 'Windows':
+        if sys.version_info.major == 3 and sys.version_info.minor == 8:
+            # {only use for python 3.8 on windows -- used for tornado
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            # }
+            
     run_tornado()
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(run_discordbot())
