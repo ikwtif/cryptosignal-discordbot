@@ -114,12 +114,6 @@ def _indicator_message_templater(indicator):
         status = indicator.get('status', 'NA')
         last_status = indicator.get('last_status', 'NA')
         values = indicator['values']
-        '''
-        if len(indicator['values'].keys()) > 1:
-            values = indicator['values']
-        else:
-            values = indicator['values'][indicator['indicator']]
-        '''
         candle_period = str(indicator['analysis']['config'].get('candle_period', 'NA'))
         period_count = str(indicator['analysis']['config'].get('period_count', 'NA'))
 
@@ -138,38 +132,7 @@ def _indicator_message_templater(indicator):
 
 async def parse_message(messages, fh):
     await save_content(messages)
-    """
-    global trigger
-    global post_time
 
-    time = messages[0]['creation_date']
-    posted_time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-    diff = posted_time - post_time
-    difference = diff.total_seconds()
-    print('diff', difference)
-    #timedelta(seconds=110)
-    if diff.total_seconds() > 20:
-        await clear_messages()
-        await asyncio.sleep(5)
-        print('sleeping?')
-    post_time = datetime.utcnow()
-    """
-
-    '''FIGURE OUT HOW TO AUTOMATICALLY REMOVE MESSAGES IN CHANNEL WHEN GETTING MULTIPLE POSTS PER NOTIFICATION RUN
-    VERIFY AGAINST CREATION DATE????
-    
-    global trigger
-    global post_time
-    trigger = trigger + 1    
-    if post_time > datetime.now() - timedelta(seconds=-60) and trigger > 1:
-        print('~'*20)
-        print(post_time)
-        print(trigger)
-        print('clearing messages')
-        post_time = datetime.now()
-        await clear_messages()
-    #await clear_messages()
-    '''
     if discordbot['charts']:
         try:
             chart = discord.File(fp="{}.png".format(fh))
@@ -228,7 +191,7 @@ class MainHandler(tornado.web.RequestHandler):
         data = self.get_argument('data', 'No data recieved')
         self.write(data)
 
-docker = aiodocker.Docker()
+docker = aiodocker.Docker('http://192.168.65.0/28')
 
 async def run_docker():
     #await create_image()
@@ -242,42 +205,7 @@ async def run_docker():
         await container.start()
     else:
         print('continuing without docker container creation')
-'''
-async def create_image():
-    name = "{}:latest".format(dockerimage['image_name'])
-    dockerfile= """
-    FROM python:3.6-jessie
-    
-    # TA-lib is required by the python TA-lib wrapper. This provides analysis.
-    COPY lib/ta-lib-0.4.0-src.tar.gz /tmp/ta-lib-0.4.0-src.tar.gz
-    
-    RUN cd /tmp && \
-      tar -xvzf ta-lib-0.4.0-src.tar.gz && \
-      cd ta-lib/ && \
-      ./configure --prefix=/usr && \
-      make && \
-      make install
-    
-    ADD /home/ikwtif/PycharmProjects/crypto-signal/app/requirements-step-1.txt /app/requirements-step-1.txt
-    ADD /home/ikwtif/PycharmProjects/crypto-signal/app/requirements-step-2.txt /app/requirements-step-2.txt
-    WORKDIR /home/ikwtif/PycharmProjects/crypto-signal/app
-    
-    # Pip doesn't install requirements sequentially.
-    # To ensure pre-reqs are installed in the correct
-    # order they have been split into two files
-    RUN pip install -r requirements-step-1.txt
-    RUN pip install -r requirements-step-2.txt
-    
-    CMD ["/usr/local/bin/python","app.py"]
-    """
 
-    f = BytesIO(dockerfile.encode("utf-8"))
-    tar_obj = utils.mktar_from_dockerfile(f)
-    await docker.images.build(fileobj=tar_obj, encoding="gzip", tag=name)
-    tar_obj.close()
-    image = await docker.images.inspect(name=name)
-    assert image
-'''
 
 def run_tornado():
     print("running tornado")
@@ -299,3 +227,4 @@ if __name__ == "__main__":
     asyncio.ensure_future(run_discordbot())
     asyncio.ensure_future(run_docker())
     loop.run_forever()
+
