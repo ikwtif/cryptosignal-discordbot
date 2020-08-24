@@ -151,22 +151,35 @@ async def parse_message(messages, fh):
         message = _indicator_message_templater(indicator)
         to_send.add_field(name=indicator['indicator'], value=message, inline=False)
     msg_candle_period = messages[0]['analysis']['config']['candle_period']
+    msg_token = messages[0]['base_currency']
     channel = None
-    channels = discordbot['channels']
-    for chnl in channels.keys():
-        if channels[chnl].get('candle_period') is None:
-            #do something? main channel if not defined?
+    channels_token = discordbot['channels_token']
+    token_found = False
+    for chan in channels_token.keys():
+        if channels_token[chan].get('token') is None:
             pass
         else:
-            if msg_candle_period == str(channels[chnl]['candle_period']):
-                print('same')
-                channel = bot.get_channel(channels[chnl]['id'])
+            if msg_token == str(channels_token[chan]['token']):
+                channel = bot.get_channel(channels_token[chan]['id'])
+                token_found = True
                 break
-            elif msg_candle_period != str(channels[chnl]['candle_period']):
-                print('not same')
+
+    if not token_found:
+        channels_candleperiod = discordbot['channels_candleperiod']
+        for chnl in channels_candleperiod.keys():
+            if channels_candleperiod[chnl].get('candle_period') is None:
+                #do something? main channel if not defined?
+                pass
+            else:
+                if msg_candle_period == str(channels_candleperiod[chnl]['candle_period']):
+                    print('same')
+                    channel = bot.get_channel(channels_candleperiod[chnl]['id'])
+                    break
+                elif msg_candle_period != str(channels_candleperiod[chnl]['candle_period']):
+                    print('not same')
 
     if channel is None:
-        channel = bot.get_channel(channels['channel_5']['id'])
+        channel = bot.get_channel(channels_candleperiod['channel_5']['id'])
 
     await channel.send(embed=to_send, file=(chart))
 
