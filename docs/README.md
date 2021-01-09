@@ -63,6 +63,21 @@ message:
                       {{ '\n' -}} candles: {{candle_period}}"
 ```
 
+## Crypto-Signal
+
+To create a connection you should set up a webhook notifier inside the config.yml file.
+
+Example:
+```
+notifiers:
+  webhook:
+    required:
+      url: http://127.0.0.1:9999
+    optional:
+      username: null
+      password: null
+```
+
 ### Prerequisites
 
 see requirements.txt
