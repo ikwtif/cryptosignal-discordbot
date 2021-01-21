@@ -78,6 +78,16 @@ notifiers:
       password: null
 ```
 
+## Docker 
+
+In the terminal screen go to the main folder, then excecute the following commands (image_name can be any name you want)
+  1. Builds a docker image with the code 
+  2. Starts the image inside a docker container
+```
+docker build -t image_name .
+docker run -d -p 9999:9999 image_name
+```
+
 ### Prerequisites
 
 see requirements.txt
