@@ -208,14 +208,18 @@ class MainHandler(tornado.web.RequestHandler):
         data = self.get_argument('data', 'No data recieved')
         self.write(data)
         msg = self.get_argument('messages', 'No data recieved')
-
-        fileinfo = self.request.files['chart'][0]
-        print('filename is {}, content type: {}'.format(fileinfo['filename'], fileinfo['content_type']))
-        fname = fileinfo['filename']
-        # extn = os.path.splitext(fname)[1]
-        # cname = str(uuid.uuid4()) + extn
-        fh = open("{}.png".format(fname), 'wb')
-        fh.write(fileinfo['body'])
+        fname = None
+        if discordbot['charts']:
+            try:
+                fileinfo = self.request.files['chart'][0]
+                print('filename is {}, content type: {}'.format(fileinfo['filename'], fileinfo['content_type']))
+                fname = fileinfo['filename']
+                # extn = os.path.splitext(fname)[1]
+                # cname = str(uuid.uuid4()) + extn
+                fh = open("{}.png".format(fname), 'wb')
+                fh.write(fileinfo['body'])
+            except KeyError as e:
+                print(e)
         print(msg)
         await parse_message(json.loads(msg), fname)
 
