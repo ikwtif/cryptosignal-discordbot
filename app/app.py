@@ -153,17 +153,20 @@ async def parse_message(messages, fh):
     msg_candle_period = messages[0]['analysis']['config']['candle_period']
     msg_token = messages[0]['base_currency']
     channel = None
-    channels_token = discordbot['channels_token']
+    try:
+        channels_token = discordbot['channels_token']
+        for chan in channels_token.keys():
+            if channels_token[chan].get('token') is None:
+                pass
+            else:
+                if msg_token == str(channels_token[chan]['token']):
+                    channel = bot.get_channel(channels_token[chan]['id'])
+                    token_found = True
+                    break
+    except KeyError as e:
+        print(e)
+        
     token_found = False
-    for chan in channels_token.keys():
-        if channels_token[chan].get('token') is None:
-            pass
-        else:
-            if msg_token == str(channels_token[chan]['token']):
-                channel = bot.get_channel(channels_token[chan]['id'])
-                token_found = True
-                break
-
     if not token_found:
         channels_candleperiod = discordbot['channels_candleperiod']
         for chnl in channels_candleperiod.keys():
