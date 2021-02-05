@@ -10,4 +10,4 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 
-CMD ["/usr/local/bin/python", "app.py"]
+CMD ["/usr/local/bin/python", "-u", "app.py"]
