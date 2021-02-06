@@ -1,25 +1,55 @@
+# testing for outside docker container
 settings:
-  test: null
+  loglevel: info
+  debug: false
 
+# docker setup needs fixing
 docker:
-  image: false
+  image:
   image_name:
 
+# setup for discordbot
 discordbot:
   charts: false
-  token:
+  # true -> posts charts in all channels
+  # false -> you can still define charts per channel
+  token: discordbot_token
   channels:
-    channel_main:
-      id:
     channel_1:
-      candle_period: 1h
-      id:
+      id: channel_id
+      base_currency: ETH
+      quote_currency:
+        - USDT
+        - BTC
+      candle_period: all
+      indicator: all
     channel_2:
-      candle_period: 4h
-      id:
+      id: channel_id
+      base_currency: all
+      quote_currency: all
+      candle_period: all
+      indicator:
+        - momentum
+        - bollinger
+        - macd
+        - ichimoku
+      chart: true
     channel_3:
-      candle_period: 1d
-      id:
+      id: channel_id
+      base_currency: all
+      quote_currency: all
+      candle_period: all
+      indicator:
+        - momentum
+      chart: false
+      title: true
+  channel_notfound:
+    # used when a channel is not found for a token/indicator
+    id: channel_id
+    base_currency: all
+    quote_currency: all
+    candle_period: all
+    indicator: all
 
 message:
   title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
@@ -29,5 +59,14 @@ message:
   indicator_template: "value: {{values}}
                       {{ '\n' -}} status: {{status}}
                       {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}
-                      {{ '\n' -}} candles: {{candle_period}}"
+                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+  title_indicator_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+                             {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+                             {{ '\n' -}} {{date}}
+                             {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}
+                             {{ '\n' -}} value: {{values}}
+                             {{ '\n' -}} status: {{status}}
+                             {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+                             {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+
+        
