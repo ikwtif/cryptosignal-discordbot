@@ -11,8 +11,8 @@ docker:
 # setup for discordbot
 discordbot:
   charts: false
-  # true -> posts charts in all channels
-  # false -> you can still define charts per channel
+  # true -> posts charts in all channels or define "charts:false" in the channel where you do not want charts to be posted
+  # false -> you can still define "charts:true" per channel
   token: discordbot_token
   channels:
     channel_1:
@@ -33,7 +33,7 @@ discordbot:
         - bollinger
         - macd
         - ichimoku
-      chart: true
+      charts: true
     channel_3:
       id: channel_id
       base_currency: all
@@ -41,7 +41,7 @@ discordbot:
       candle_period: all
       indicator:
         - momentum
-      chart: false
+      charts: false
       title: true
   channel_notfound:
     # used when a channel is not found for a token/indicator

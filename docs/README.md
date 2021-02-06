@@ -29,55 +29,60 @@ docker:
 
 ## Config File
 
-The following allows you to setup channels with seperated candle_periods. 
-Create channels for every candle_period you are sending to the bot. 
-The main channel is just used to post a `hello!` message when the bot starts. 
-You can define multiple combinations of tokens/indicators for one channel,`all` means any go.
+The following allows you to setup channels. 
+You can define multiple combinations of base currency/quote currency/indicators/candle_periods for one channel,
+`all` means any go. Use the naming scheme as defined by crypto-signal, they should match. 
+For candle periods, If you want to use weeks and months, see this PR for crypto-signal:https://github.com/CryptoSignal/Crypto-Signal/pull/393 
 
-Use tokens/indicators names as defined by crypto-signal, they should match. 
-Use candle_periods as defined by crypto-signal, they should match. If you want to use weeks and months, see this PR for crypto-signal:https://github.com/CryptoSignal/Crypto-Signal/pull/393 
+Every name for a channel, except channel_notfound (ex. `channel_1`) should be unique but can be custom.
+You can leave out channel_notfound if you do not want this functionality. 
 
-Every name for a channel, except channel_notfound (ex. `channel_1`) should be unique inside their main channel 
-(`channels_token`, `channels_candleperiod`) but can be anything.
+Only use the "title:true" option with a setup for 1 indicator. This will put everything in the title section of a 
+discord message and will use title_indicator_template. 
 
 ```
+# setup for discordbot
 discordbot:
   charts: false
-  token: your_discordbot_token
-  channels_token:
-    # channels based on the token you want to send to the channel
+  # true -> posts charts in all channels or define "charts:false" in the channel where you do not want charts to be posted
+  # false -> you can still define "charts:true" per channel
+  token: discordbot_token
+  channels:
     channel_1:
-      token: BTC
-      id: your_discord_channel_id
-      indicator: 
-        - momentum
-        - iiv
-  channels_candleperiod:
-    # channels based on the candle period you want to send to the channel
-    channel_1:
-      token: all
-      candle_period: 5m
-      id: your_discord_channel_id
+      id: channel_id
+      base_currency: ETH
+      quote_currency:
+        - USDT
+        - BTC
+      candle_period: all
       indicator: all
     channel_2:
-      token: ETH
-      candle_period: 1d
-      id: your_discord_channel_id
-      indicator: all
+      id: channel_id
+      base_currency: all
+      quote_currency: all
+      candle_period: all
+      indicator:
+        - momentum
+        - bollinger
+        - macd
+        - ichimoku
+      charts: true
+    channel_3:
+      id: channel_id
+      base_currency: all
+      quote_currency: all
+      candle_period: all
+      indicator:
+        - momentum
+      charts: false
+      title: true
   channel_notfound:
     # used when a channel is not found for a token/indicator
-    token: all
-    id: your_discord_channel_id
+    id: channel_id
+    base_currency: all
+    quote_currency: all
+    candle_period: all
     indicator: all
-```
-
-#### One Indicator setup
-```
-message:
-  # only set indicator to false if you are sending one indicator
-  # and you want to use the indicator data in the title_template
-  title: true
-  indicator: true
 ```
 
 Messages use Jinja2 templating, see the example for most options.
@@ -91,8 +96,15 @@ message:
   indicator_template: "value: {{values}}
                       {{ '\n' -}} status: {{status}}
                       {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}
-                      {{ '\n' -}} candles: {{candle_period}}"
+                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+  title_indicator_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+                             {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+                             {{ '\n' -}} {{date}}
+                             {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}
+                             {{ '\n' -}} value: {{values}}
+                             {{ '\n' -}} status: {{status}}
+                             {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+                             {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
 ```
 ##### Current Options
 ```
