@@ -139,7 +139,7 @@ Change PATH_TO_APP_FOLDER to your the path of the app folder inside crypto-signa
 
 ```
 docker build -t signal .
-docker run -it --net="host" -v PATH_TO_APP_FOLDER:/app signal
+docker run -it --rm --net="host" -v PATH_TO_APP_FOLDER:/app signal
 ```
 
 ## Docker-compose
