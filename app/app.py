@@ -91,6 +91,11 @@ def save_content(messages):
         out.write(messages)
         logging.info(f'printing message recieved and saved in {filename}.txt')
 
+def _title_indicator_message_templater(data):
+    message_template = Template(message_templater['title_indicator_template'])
+    new_message = str()
+    new_message += message_template.render(**data)
+    return new_message
 
 def _indicator_message_templater(data):
     message_template = Template(message_templater['indicator_template'])
@@ -105,13 +110,13 @@ def title_data(messages):
     price_low = 'NA'
     price_close = 'NA'
 
-    indicator_analyses = messages[0].get('analysis', None)
+    indicator_analyses = messages[0].get('analysis')
     if indicator_analyses:
-        indicator_config = indicator_analyses.get('config', None)
+        indicator_config = indicator_analyses.get('config')
         if indicator_config:
             candle_period = str(indicator_config.get('candle_period', 'NA'))
 
-    price_value = messages[0].get('price_value', None)
+    price_value = messages[0].get('price_value')
     if price_value:
         price_high = price_value.get('high', 'NA')
         price_low = price_value.get('low', 'NA')
@@ -136,9 +141,9 @@ def title_data(messages):
 def indicator_data(indicator):
     candle_period = 'NA'
     period_count = 'NA'
-    indicator_analyses = indicator.get('analysis', None)
+    indicator_analyses = indicator.get('analysis')
     if indicator_analyses:
-        indicator_config = indicator_analyses.get('config', None)
+        indicator_config = indicator_analyses.get('config')
         if indicator_config:
             candle_period = str(indicator_config.get('candle_period', 'NA'))
             period_count = str(indicator_config.get('period_count', 'NA'))
@@ -161,110 +166,133 @@ async def parse_message(messages, fh):
     logging.debug(f'message recieved: \n {messages}')
     if settings['test']:
         save_content(messages)
-    msg_candle_period = messages[0].get('analysis').get('config').get('candle_period', None)
-    msg_token = messages[0].get('base_currency', None)
+    msg_candle_period = messages[0].get('analysis').get('config').get('candle_period')
+    msg_token = messages[0].get('base_currency')
     logging.info(f'parsing message for {msg_token, msg_candle_period}')
 
     # {
-    # grabbing discord channels
+    # grabbing discord channels based on defined tokens
     channels = list()
-    channels_token = discordbot.get('channels_token', None)
+    channels_token = discordbot.get('channels_token')
+    logging.debug(f'Setup for channels: {channels_token}')
     if channels_token:
         for chan in channels_token.keys():
-            tokens = channels_token[chan].get('token', None)
-            if tokens:
-                if isinstance(tokens, str):
-                    if msg_token == tokens:
-                        logging.info(f'Found token channel for: {msg_token} in {chan} with {tokens}')
+            chnl_tokens = channels_token[chan].get('token')
+            logging.info(f'checking message token {msg_token} against {chnl_tokens}')
+            if chnl_tokens:
+                if isinstance(chnl_tokens, str):
+                    if chnl_tokens == 'all':
+                        logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
                         channels.append(channels_token[chan])
-                elif isinstance(tokens, list):
-                    for token in tokens:
+                    elif msg_token == chnl_tokens:
+                        logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
+                        channels.append(channels_token[chan])
+                elif isinstance(chnl_tokens, list):
+                    for token in chnl_tokens:
                         if msg_token == token:
-                            logging.info(f'Found token channel for: {msg_token} in {chan} with {tokens}')
+                            logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
                             channels.append(channels_token[chan])
-                else:
-                    logging.info(f'Found no token channel for: {msg_token}')
+    else:
+        logging.info(f'no channels_tokens defined in config')
 
-    channels_candleperiod = discordbot.get('channels_candleperiod', None)
+    channels_candleperiod = discordbot.get('channels_candleperiod')
+    logging.debug(f'Setup for channels: {channels_candleperiod}')
     if channels_candleperiod:
         for chnl in channels_candleperiod.keys():
-            chnl_tokens = channels_candleperiod[chnl].get('token', None)
-            if channels_candleperiod[chnl].get('candle_period', None):
-                if chnl_tokens == 'all':
-                    if msg_candle_period == channels_candleperiod[chnl]['candle_period']:
+            chnl_tokens = channels_candleperiod[chnl].get('token')
+            logging.info(f'checking message token {msg_token} against {chnl_tokens}')
+            if channels_candleperiod[chnl].get('candle_period'):
+                if isinstance(chnl_tokens, str):
+                    if chnl_tokens == 'all':
+                        if msg_candle_period == channels_candleperiod[chnl]['candle_period']:
+                            logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
+                            channels.append(channels_candleperiod[chnl])
+
+                    elif msg_token == chnl_tokens:
+                        if msg_candle_period == channels_candleperiod[chnl]['candle_period']:
+                            logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
+                            channels.append(channels_candleperiod[chnl])
+
+                elif isinstance(chnl_tokens, list):
+                    if msg_token in chnl_tokens:
                         logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
                         channels.append(channels_candleperiod[chnl])
-                elif msg_token in chnl_tokens:
-                    logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
-                    channels.append(channels_candleperiod[chnl])
-                else:
-                    logging.info(f'no tokens defined for channel candle period: {chnl}')
-            else:
-                logging.info(f'no candle period defined for channel candle period: {chnl}')
-    if len(channels) == 0:
-        channels.append(discordbot.get('channel_notfound', None))
-        logging.info('Using channel <not found> for discord message')
-    # }
-
-    # {
-    # check for chart
-    chart = None
-    if discordbot['charts']:
-        logging.info('Checking for charts')
-        try:
-            chart = discord.File(fp=f'{fh}.png')
-        except Exception as e:
-            logging.info(f'{e}: no charts recieved')
     else:
-        logging.info('No chart setup')
+        logging.info(f'no channels_candleperiod defined in config')
+
+    if len(channels) == 0:
+        not_found = discordbot.get('channel_notfound')
+        if not_found:
+            channels.append(not_found)
+            logging.info(f'Using channel <not found> for {msg_token}')
     # }
 
     # {
-    # setup discord message
-    to_send = None
+    # Preparing messages
+    discord_messages = list()
     for channel in channels:
-
+        logging.info(f'preparing message for channel {channel}')
         data_title = title_data(messages)
-        for data in messages:
-            signal = data['indicator']
-            indicator = channel.get('indicator')
-            use = False
-            if indicator == 'all':
-                use = True
-            elif isinstance(indicator, list):
-                if signal in indicator:
-                    use = True
-            elif signal == indicator:
-                use = True
-            if use:
-                if message_templater['title'] and message_templater['indicator']:
-                    # uses discord title for token data and discord message for indicator data
-                    title = _title_message_templater(data_title)
+        indicator = channel.get('indicator')
+        title = _title_message_templater(data_title)
+        to_send = discord.Embed(title=title,
+                                type="rich")
+        if channel.get('title'):
+            for data in messages:
+                signal = data['indicator']
+                logging.info(f'matching {signal} with channel indicator {indicator}')
+                if signal == indicator:
+                    data_indicator = indicator_data(messages[0])
+                    data_total = {**data_title, **data_indicator}
+                    title = _title_indicator_message_templater(data_total)
                     to_send = discord.Embed(title=title,
                                             type="rich")
+                    discord_messages.append((channel, to_send))
+                    break
+        else:
+            for data in messages:
+                signal = data['indicator']
+                logging.info(f'matching {signal} with channel indicator {indicator}')
+                use = False
+                if isinstance(indicator, str):
+                    if indicator == 'all':
+                        use = True
+                    elif signal == indicator:
+                        use = True
+                elif isinstance(indicator, list):
+                    if signal in indicator:
+                        use = True
+                if use:
                     data_indicator = indicator_data(data)
                     message = _indicator_message_templater(data_indicator)
                     to_send.add_field(name=signal, value=message, inline=False)
-                elif message_templater['title'] and not message_templater['indicator']:
-                    # uses discord title for token data and indicator data
-                    # only possible with 1 indicator setup
-                    data_indicator = indicator_data(messages[0])
-                    data_total = {**data_title, **data_indicator}
-                    title = _title_message_templater(data_total)
-                    to_send = discord.Embed(title=title,
-                                            type="rich")
-                else:
-                    logging.info('wrong true/false setup combination for title and indicator')
-            else:
-                logging.info(f'no indicator setup found for {indicator}')
+            discord_messages.append((channel, to_send))
     # }
 
     # {
-    # sending message
-    if to_send:
-        for channel in channels:
+    # sending messages
+    if len(discord_messages) > 0:
+        logging.info('Sending discord messages')
+        for message in discord_messages:
+            channel = message[0]
+            to_send = message[1]
+            logging.info(f'message being prepared {channel}, {to_send}')
+            # {
+            # check for chart
+            chart = None
+            if discordbot['charts'] or channel.get('charts'):
+                logging.info('Checking for charts')
+                try:
+                    chart = discord.File(fp=f'{fh}.png')
+                    logging.info('Chart found')
+                except Exception as e:
+                    logging.info(f'{e}: no charts recieved')
+            else:
+                logging.info('No chart setup')
+            # }
+
             channel_id = bot.get_channel(channel.get('id'))
-            await channel_id.send(embed=to_send, file=(chart))
+            await channel_id.send(embed=to_send, file=chart)
     # }
 
 # {
@@ -293,19 +321,18 @@ class MainHandler(tornado.web.RequestHandler):
         self.write(data)
         msg = self.get_argument('messages', 'No data recieved')
         fname = None
-        if discordbot['charts']:
-            try:
-                fileinfo = self.request.files['chart'][0]
-                filename = fileinfo['filename']
-                content_type = fileinfo['content_type']
-                logging.info(f'filename is {filename}, content type: {content_type}')
-                fname = fileinfo['filename']
-                # extn = os.path.splitext(fname)[1]
-                # cname = str(uuid.uuid4()) + extn
-                fh = open(f'{fname}.png', 'wb')
-                fh.write(fileinfo['body'])
-            except KeyError as e:
-                logging.info(f'{e}')
+        try:
+            fileinfo = self.request.files['chart'][0]
+            filename = fileinfo['filename']
+            content_type = fileinfo['content_type']
+            logging.info(f'filename is {filename}, content type: {content_type}')
+            fname = fileinfo['filename']
+            # extn = os.path.splitext(fname)[1]
+            # cname = str(uuid.uuid4()) + extn
+            fh = open(f'{fname}.png', 'wb')
+            fh.write(fileinfo['body'])
+        except KeyError as e:
+            logging.info(f'{e}')
         await parse_message(json.loads(msg), fname)
 
     async def get(self):
