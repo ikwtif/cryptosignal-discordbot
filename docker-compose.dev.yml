@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  app:
+    image: bot
+    ports:
+      - 9999:9999
+    volumes:
+      - ./app:/app
