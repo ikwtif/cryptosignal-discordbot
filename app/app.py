@@ -18,9 +18,6 @@ import logging
 
 # TODO - fix docker setup
 
-# logging setup
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
-
 # # monkey patch du to 3.8 breaking change for tornado
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -38,6 +35,16 @@ def config():
 
 settings, discordbot, message_templater, dockerimage = config()
 # }
+
+# logging setup
+loglevel = settings.get('loglevel')
+if loglevel:
+    if loglevel == 'info':
+        logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
+    elif loglevel == 'debug':
+        logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
+else:
+    logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
 
 # {
 # bot setup
@@ -162,64 +169,51 @@ def indicator_data(indicator):
     return indicator
 
 
+def config_find(to_find, to_check, channel=None):
+    if channel is None:
+        channel = '< undefined >'
+    found = False
+    if to_check:
+        logging.info(f'Searching {to_find} in {to_check} for channel {channel}')
+        if isinstance(to_check, str):
+            if to_check == 'all':
+                logging.info(f'Found channel for: {to_find} in {channel} -- {to_check}')
+                found = True
+            elif to_find == to_check:
+                logging.info(f'Found channel for: {to_find} in {channel} -- {to_check}')
+                found = True
+        elif isinstance(to_check, list):
+            if to_find in to_check:
+                logging.info(f'Found channel for: {to_find} in {channel} -- {to_check}')
+                found = True
+    return found
+
+
 async def parse_message(messages, fh):
     logging.debug(f'message recieved: \n {messages}')
-    if settings['test']:
+    if settings.get('debug') is True:
         save_content(messages)
     msg_candle_period = messages[0].get('analysis').get('config').get('candle_period')
     msg_token = messages[0].get('base_currency')
+    msg_quote = messages[0].get('quote_currency')
     logging.info(f'parsing message for {msg_token, msg_candle_period}')
 
     # {
-    # grabbing discord channels based on defined tokens
+    # creating list of discord channels based on config
     channels = list()
-    channels_token = discordbot.get('channels_token')
-    logging.debug(f'Setup for channels: {channels_token}')
-    if channels_token:
-        for chan in channels_token.keys():
-            chnl_tokens = channels_token[chan].get('token')
-            logging.info(f'checking message token {msg_token} against {chnl_tokens}')
-            if chnl_tokens:
-                if isinstance(chnl_tokens, str):
-                    if chnl_tokens == 'all':
-                        logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
-                        channels.append(channels_token[chan])
-                    elif msg_token == chnl_tokens:
-                        logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
-                        channels.append(channels_token[chan])
-                elif isinstance(chnl_tokens, list):
-                    for token in chnl_tokens:
-                        if msg_token == token:
-                            logging.info(f'Found token channel for: {msg_token} in {chan} with {chnl_tokens}')
-                            channels.append(channels_token[chan])
-    else:
-        logging.info(f'no channels_tokens defined in config')
-
-    channels_candleperiod = discordbot.get('channels_candleperiod')
-    logging.debug(f'Setup for channels: {channels_candleperiod}')
-    if channels_candleperiod:
-        for chnl in channels_candleperiod.keys():
-            chnl_tokens = channels_candleperiod[chnl].get('token')
-            logging.info(f'checking message token {msg_token} against {chnl_tokens}')
-            if channels_candleperiod[chnl].get('candle_period'):
-                if isinstance(chnl_tokens, str):
-                    if chnl_tokens == 'all':
-                        if msg_candle_period == channels_candleperiod[chnl]['candle_period']:
-                            logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
-                            channels.append(channels_candleperiod[chnl])
-
-                    elif msg_token == chnl_tokens:
-                        if msg_candle_period == channels_candleperiod[chnl]['candle_period']:
-                            logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
-                            channels.append(channels_candleperiod[chnl])
-
-                elif isinstance(chnl_tokens, list):
-                    if msg_token in chnl_tokens:
-                        logging.info(f'Found candle channel for {msg_token} in {chnl} with {chnl_tokens}')
-                        channels.append(channels_candleperiod[chnl])
-    else:
-        logging.info(f'no channels_candleperiod defined in config')
-
+    channels_discord = discordbot.get('channels')
+    logging.debug(f'Setup for channels: {channels_discord}')
+    if channels_discord:
+        for chan in channels_discord.keys():
+            chnl_tokens = channels_discord[chan].get('base_currency')
+            channel_candle_period = channels_discord[chan].get('candle_period')
+            channel_quote = channels_discord[chan].get('quote_currency')
+            find_cnl_token = config_find(to_check=chnl_tokens, to_find=msg_token, channel=chan)
+            find_chnl_candle = config_find(to_check=channel_candle_period, to_find=msg_candle_period, channel=chan)
+            find_chnl_quote = config_find(to_check=channel_quote, to_find=msg_quote, channel=chan)
+            if find_cnl_token and find_chnl_candle and find_chnl_quote:
+                channels.append(channels_discord[chan])
+                logging.info(f'Adding channel {chan} to messages list for {msg_token}/{msg_quote}, {msg_candle_period}')
     if len(channels) == 0:
         not_found = discordbot.get('channel_notfound')
         if not_found:
@@ -252,16 +246,7 @@ async def parse_message(messages, fh):
         else:
             for data in messages:
                 signal = data['indicator']
-                logging.info(f'matching {signal} with channel indicator {indicator}')
-                use = False
-                if isinstance(indicator, str):
-                    if indicator == 'all':
-                        use = True
-                    elif signal == indicator:
-                        use = True
-                elif isinstance(indicator, list):
-                    if signal in indicator:
-                        use = True
+                use = config_find(to_check=indicator, to_find=signal, channel=channel)
                 if use:
                     data_indicator = indicator_data(data)
                     message = _indicator_message_templater(data_indicator)
@@ -280,8 +265,17 @@ async def parse_message(messages, fh):
             # {
             # check for chart
             chart = None
-            if discordbot['charts'] or channel.get('charts'):
-                logging.info('Checking for charts')
+            load_chart = False
+            if discordbot['charts']:
+                if channel.get('charts') is False:
+                    load_chart = False
+                else:
+                    load_chart = True
+            elif not discordbot['charts'] and channel.get('charts'):
+                load_chart = True
+
+            if load_chart:
+                logging.info('Trying to load chart')
                 try:
                     chart = discord.File(fp=f'{fh}.png')
                     logging.info('Chart found')
@@ -293,6 +287,8 @@ async def parse_message(messages, fh):
 
             channel_id = bot.get_channel(channel.get('id'))
             await channel_id.send(embed=to_send, file=chart)
+    else:
+        logging.info('No messages found to send')
     # }
 
 # {
