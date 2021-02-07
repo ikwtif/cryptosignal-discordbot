@@ -159,6 +159,7 @@ def indicator_data(indicator):
         'hot_label': indicator.get('hot_label', 'NA'),
         'cold_label': indicator.get('hot_label', 'NA'),
         'indicator_label': indicator.get('indicator_label', 'NA'),
+        'hot_cold_label': indicator.get('hot_cold_label', 'NA'),
         'status': indicator.get('status', 'NA'),
         'last_status': indicator.get('last_status', 'NA'),
         'values': indicator.get('values', 'NA'),
