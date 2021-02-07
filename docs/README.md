@@ -113,7 +113,7 @@ base_currency | quote_currency | candle_period | market | date | exchange | pric
 price_low | price_close | candle_period | period_count
 
 indicator template:
-values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label 
+values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label | hot_cold_label
 
 title_indicator_template: 
 everything mentioned
