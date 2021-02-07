@@ -85,7 +85,7 @@ discordbot:
     indicator: all
 ```
 
-Messages use Jinja2 templating, see the example for most options.
+Messages use Jinja2 templating, see the example.
 
 ```
 message:
@@ -112,8 +112,11 @@ title template:
 base_currency | quote_currency | candle_period | market | date | exchange | prices| price_high | 
 price_low | price_close | candle_period | period_count
 
-indicator template (can be used with title template for a 1 indicator setup):
-values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label | hot_cold_label
+indicator template:
+values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label 
+
+title_indicator_template: 
+everything mentioned
 ```
 
 ## Crypto-Signal
@@ -147,7 +150,7 @@ For Crypto-Signal
   1. Builds a docker image
   2. Starts a docker container. 
   
-Change PATH_TO_APP_FOLDER to your the path of the app folder inside crypto-signal
+Change PATH_TO_APP_FOLDER to your path of the app folder inside crypto-signal
 
 ```
 docker build -t signal .
