@@ -144,7 +144,7 @@ In the terminal screen go to the main folder, then excecute the following comman
   2. Starts a docker container
 ```
 docker build -t image_name .
-docker run -d -p 9999:9999 image_name
+docker run -d --rm -p 9999:9999 image_name
 ```
 For Crypto-Signal
   1. Builds a docker image
@@ -161,9 +161,11 @@ docker run -it --rm --net="host" -v PATH_TO_APP_FOLDER:/app signal
 1. Build a docker image
 2. Run/Restart the container with the following command 
 ```
-docker build -t image_name .
+docker build -t bot .
 docker-compose -f docker-compose.dev.yml up
 ```
+The image name and port number (default: 9999:9999) are defined in the docker-compose.dev.yml file. 
+You can change those there if you want.
 
 ### Prerequisites
 
