@@ -24,20 +24,11 @@ if sys.platform == 'win32':
 
 # {
 # loading config
-def config():
-    conf = Configuration()
-    settings = conf.settings
-    discordbot = conf.discordbot
-    message_templater = conf.message
-    dockerimage = conf.docker
-    return settings, discordbot, message_templater, dockerimage
-
-
-settings, discordbot, message_templater, dockerimage = config()
+configuration = Configuration()
 # }
 
 # logging setup
-loglevel = settings.get('loglevel')
+loglevel = configuration.settings.get('loglevel')
 if loglevel:
     if loglevel == 'info':
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
@@ -65,11 +56,11 @@ async def test(ctx):
 async def clear_messages(amount=100):
     # TODO not used
     chnls = list()
-    for channel in discordbot['channels'].keys():
+    for channel in configuration.discordbot['channels'].keys():
         if channel == 'channel_main':
             pass
-        elif not (discordbot['channels'][channel]['id'] in chnls):
-            chnls.append(discordbot['channels'][channel]['id'])
+        elif not (configuration.discordbot['channels'][channel]['id'] in chnls):
+            chnls.append(configuration.discordbot['channels'][channel]['id'])
     for channel in chnls:
         channelid = bot.get_channel(int(channel))
         messages = await channelid.history().flatten()
@@ -85,7 +76,7 @@ def _find_number(prices, text):
 
 
 def _title_message_templater(data):
-    message_template = Template(message_templater['title_template'])
+    message_template = Template(configuration.message_templater['title_template'])
     new_title = str()
     new_title += message_template.render(**data)
     return new_title
@@ -99,13 +90,13 @@ def save_content(messages):
         logging.info(f'printing message recieved and saved in {filename}.txt')
 
 def _title_indicator_message_templater(data):
-    message_template = Template(message_templater['title_indicator_template'])
+    message_template = Template(configuration.message_templater['title_indicator_template'])
     new_message = str()
     new_message += message_template.render(**data)
     return new_message
 
 def _indicator_message_templater(data):
-    message_template = Template(message_templater['indicator_template'])
+    message_template = Template(configuration.message_templater['indicator_template'])
     new_message = str()
     new_message += message_template.render(**data)
     return new_message
@@ -192,7 +183,7 @@ def config_find(to_find, to_check, channel=None):
 
 async def parse_message(messages, fh):
     logging.debug(f'message recieved: \n {messages}')
-    if settings.get('debug') is True:
+    if configuration.settings.get('debug') is True:
         save_content(messages)
     msg_candle_period = messages[0].get('analysis').get('config').get('candle_period')
     msg_token = messages[0].get('base_currency')
@@ -202,7 +193,7 @@ async def parse_message(messages, fh):
     # {
     # creating list of discord channels based on config
     channels = list()
-    channels_discord = discordbot.get('channels')
+    channels_discord = configuration.discordbot.get('channels')
     logging.debug(f'Setup for channels: {channels_discord}')
     if channels_discord:
         for chan in channels_discord.keys():
@@ -216,7 +207,7 @@ async def parse_message(messages, fh):
                 channels.append(channels_discord[chan])
                 logging.info(f'Adding channel {chan} to messages list for {msg_token}/{msg_quote}, {msg_candle_period}')
     if len(channels) == 0:
-        not_found = discordbot.get('channel_notfound')
+        not_found = configuration.discordbot.get('channel_notfound')
         if not_found:
             channels.append(not_found)
             logging.info(f'Using channel <not found> for {msg_token}')
@@ -267,12 +258,12 @@ async def parse_message(messages, fh):
             # check for chart
             chart = None
             load_chart = False
-            if discordbot['charts']:
+            if configuration.discordbot['charts']:
                 if channel.get('charts') is False:
                     load_chart = False
                 else:
                     load_chart = True
-            elif not discordbot['charts'] and channel.get('charts'):
+            elif not configuration.discordbot['charts'] and channel.get('charts'):
                 load_chart = True
 
             if load_chart:
@@ -298,10 +289,10 @@ async def parse_message(messages, fh):
 docker = aiodocker.Docker('http://192.168.65.0/28')
 async def run_docker():
     #await create_image()
-    if dockerimage['image']:
+    if configuration.docker['image']:
         logging.info('Running docker')
         container = await docker.containers.create_or_replace(
-            config={'Cmd': ["/usr/local/bin/python", "app.py"], 'Image': dockerimage['image_name']},
+            config={'Cmd': ["/usr/local/bin/python", "app.py"], 'Image': configuration.docker['image_name']},
             name='crypto-signal')
         logging.info(f'created and started container {container._id[:12]}')
         await container.start()
@@ -344,5 +335,5 @@ if __name__ == '__main__':
     app.listen(port)
     logging.info(f'Listening on http://localhost:{port}')
     loop = asyncio.get_event_loop()
-    asyncio.ensure_future(bot.start(discordbot['token']), loop=loop)
+    asyncio.ensure_future(bot.start(configuration.discordbot['token']), loop=loop)
     loop.run_forever()

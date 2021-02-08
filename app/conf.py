@@ -3,7 +3,8 @@
 
 import os
 import yaml
-
+import logging
+import glob
 
 class Configuration:
     """Parses the environment configuration to create the config objects.
@@ -12,28 +13,24 @@ class Configuration:
     def __init__(self):
         """Initializes the Configuration class
         """
+        logging.info('loading configuration file')
+        for name in glob.glob('*.yml'):
+            if name.lower() == 'configbot.yml':
+                with open(name, 'r') as config_file:
+                    user_config = yaml.load(config_file, Loader=yaml.FullLoader)
+                    break
+        if not user_config:
+            raise Exception('No configuration file exists')
 
-        if os.path.isfile('configBot.yml'):
-            with open('configBot.yml', 'r') as config_file:
-                user_config = yaml.load(config_file, Loader=yaml.FullLoader)
-        else:
-            user_config = dict()
-
-        if 'settings' in user_config:
-            self.settings = user_config['settings']
-        else:
-            raise Exception("no settings")
-
-        if 'discordbot' in user_config:
-            self.discordbot = user_config['discordbot']
-
-        if 'docker' in user_config:
-            self.docker = user_config['docker']
-
-        else:
-            raise Exception("no bot configured")
-
-        if 'message' in user_config:
-            self.message = user_config['message']
-        else:
-            raise Exception("no message configured")
+        self.settings = user_config.get('settings')
+        self.discordbot = user_config.get('discordbot')
+        self.docker = user_config.get('docker')
+        self.message = user_config.get('message')
+        if not self.settings:
+            logging.info('Missing settings, using defaults')
+        if not self.discordbot:
+            raise Exception('Missing discordbot setup')
+        if not self.docker:
+            logging.info('Missing settings for docker, no problem, is not used')
+        if not self.message:
+            raise Exception('Missing settings for message template')
