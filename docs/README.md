@@ -3,33 +3,66 @@
 Discordbot for use with CryptoSignal Development branch (https://github.com/CryptoSignal/crypto-signal/tree/develop)
 
 ## Getting Started
-####DOES CURRENTLY NOT WORK. 
-####See Docker and Docker-compose section for how to run with Docker
+See Docker or Docker-compose section for starting the app. Docker-compose let's you test out the app/configurations 
+without having to rebuild the docker image every time. 
+See Crytpo-Signal section for setting up a Crypto-Signal webhook to send data to the bot.
+See Config File for the options. 
 
-If you want to use the Discordbot with a docker image for crypto-signal.
+## Docker 
 
-Set up a docker image from CryptoSignal development branch.
-Building the docker image (config file used should be inside app folder when building image):
-
-  In the dockerfile add the following line
-  
-    `ADD app/ /app`
-    
-  Then build image with:
-  
-    `docker build . -t [your image name]`
-
-
-Create Config file for discordbot as `configBot.yml` and add the following
+In the terminal screen go to the main folder, then excecute the following commands (image_name can be any name you want)
+  1. Builds a docker image 
+  2. Starts a docker container
 ```
-docker:
-  image: true
-  image_name: [your image name]
+docker build -t image_name .
+docker run -d --rm -p 9999:9999 image_name
+```
+For Crypto-Signal
+  1. Builds a docker image
+  2. Starts a docker container. 
+  
+Change PATH_TO_APP_FOLDER to your path of the app folder inside crypto-signal
+
+```
+docker build -t signal .
+docker run -it --rm --net="host" -v PATH_TO_APP_FOLDER:/app signal
 ```
 
-## Config File
+## Docker-compose
+1. Build a docker image
+2. Run/Restart the container with the following command 
+```
+docker build -t bot .
+docker-compose -f docker-compose.dev.yml up
+```
+The image name and port number (default: 9999:9999) are defined in the docker-compose.dev.yml file. 
+You can change those there if you want.
 
-The following allows you to setup channels. 
+
+## Crypto-Signal
+
+To create a connection you should set up a webhook notifier inside the config.yml file for crypto-signal.
+You can use the url from the example if both are running on the same machine and if you run the crytpo-signal docker 
+container with the `--net="host"` flag. If there are issues you can check the route Gateway for the Discordbot 
+Docker container and use that. Or run both without Docker.
+
+Example:
+```
+notifiers:
+  webhook:
+    required:
+      url: http://127.0.0.1:9999
+    optional:
+      username: null
+      password: null
+```
+
+## Configuration File 
+
+Create your own configuration file called `configBot.yml` for use with the app.
+See the `configBotDefault.yml` file for a full example configuration file. 
+
+The app allows you to set up different discord channels. 
 You can define multiple combinations of base currency/quote currency/indicators/candle_periods for one channel,
 `all` means any go. Use the naming scheme as defined by crypto-signal, they should match. 
 For candle periods, If you want to use weeks and months, see this PR for crypto-signal:https://github.com/CryptoSignal/Crypto-Signal/pull/393 
@@ -38,7 +71,7 @@ Every name for a channel, except channel_notfound (ex. `channel_1`) should be un
 You can leave out channel_notfound if you do not want this functionality. 
 
 Only use the "title:true" option with a setup for 1 indicator. This will put everything in the title section of a 
-discord message and will use title_indicator_template. 
+discord message and will use title_indicator_template for creating the message. 
 
 ```
 # setup for discordbot
@@ -118,54 +151,6 @@ values | candle_period | period_count| status | last_status | hot_label | cold_l
 title_indicator_template: 
 everything mentioned
 ```
-
-## Crypto-Signal
-
-To create a connection you should set up a webhook notifier inside the config.yml file for crypto-signal.
-You can use the url from the example if both are running on the same machine and if you run the crytpo-signal docker 
-container with the `--net="host"` flag. If there are issues you can check the route Gateway for the Discordbot 
-Docker container and use that. Or run both without Docker.
-
-Example:
-```
-notifiers:
-  webhook:
-    required:
-      url: http://127.0.0.1:9999
-    optional:
-      username: null
-      password: null
-```
-
-## Docker 
-
-In the terminal screen go to the main folder, then excecute the following commands (image_name can be any name you want)
-  1. Builds a docker image 
-  2. Starts a docker container
-```
-docker build -t image_name .
-docker run -d --rm -p 9999:9999 image_name
-```
-For Crypto-Signal
-  1. Builds a docker image
-  2. Starts a docker container. 
-  
-Change PATH_TO_APP_FOLDER to your path of the app folder inside crypto-signal
-
-```
-docker build -t signal .
-docker run -it --rm --net="host" -v PATH_TO_APP_FOLDER:/app signal
-```
-
-## Docker-compose
-1. Build a docker image
-2. Run/Restart the container with the following command 
-```
-docker build -t bot .
-docker-compose -f docker-compose.dev.yml up
-```
-The image name and port number (default: 9999:9999) are defined in the docker-compose.dev.yml file. 
-You can change those there if you want.
 
 ### Prerequisites
 
