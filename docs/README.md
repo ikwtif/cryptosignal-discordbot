@@ -6,7 +6,7 @@ Discordbot for use with CryptoSignal Development branch (https://github.com/Cryp
 See Docker or Docker-compose section for starting the app. Docker-compose let's you test out the app/configurations 
 without having to rebuild the docker image every time. 
 See Crytpo-Signal section for setting up a Crypto-Signal webhook to send data to the bot.
-See Config File for the options. 
+See Config File for the options, make your own config file and name it configBot.yml and put it in the app folder. 
 
 ## Docker 
 
