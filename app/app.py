@@ -76,7 +76,7 @@ def _find_number(prices, text):
 
 
 def _title_message_templater(data):
-    message_template = Template(configuration.message_templater['title_template'])
+    message_template = Template(configuration.message['title_template'])
     new_title = str()
     new_title += message_template.render(**data)
     return new_title
@@ -90,13 +90,13 @@ def save_content(messages):
         logging.info(f'printing message recieved and saved in {filename}.txt')
 
 def _title_indicator_message_templater(data):
-    message_template = Template(configuration.message_templater['title_indicator_template'])
+    message_template = Template(configuration.message['title_indicator_template'])
     new_message = str()
     new_message += message_template.render(**data)
     return new_message
 
 def _indicator_message_templater(data):
-    message_template = Template(configuration.message_templater['indicator_template'])
+    message_template = Template(configuration.message['indicator_template'])
     new_message = str()
     new_message += message_template.render(**data)
     return new_message
