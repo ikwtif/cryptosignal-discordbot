@@ -68,5 +68,6 @@ message:
                              {{ '\n' -}} status: {{status}}
                              {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
                              {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+  name_message_template: "{{indicator}}"
 
         

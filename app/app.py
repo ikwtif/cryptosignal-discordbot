@@ -81,6 +81,12 @@ def _title_message_templater(data):
     new_title += message_template.render(**data)
     return new_title
 
+def _name_message_templater(data):
+    name_template = Template(configuration.message['name_message_template'])
+    new_name =str()
+    new_name += name_template.render(**data)
+    return new_name
+
 
 def save_content(messages):
     # Do not use while running inside docker container
@@ -233,6 +239,9 @@ async def parse_message(messages, fh):
                     title = _title_indicator_message_templater(data_total)
                     to_send = discord.Embed(title=title,
                                             type="rich")
+                    if configuration.message.get('name_message_template'):
+                        message_title = _name_message_templater({**data, **data['analysis'].get('config')})
+                        to_send.add_field(name=message_title, value='.', inline=False)
                     discord_messages.append((channel, to_send))
                     break
         else:
