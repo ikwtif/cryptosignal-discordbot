@@ -71,8 +71,8 @@ Every name for a channel, except channel_notfound (ex. `channel_1`) should be un
 You can leave out channel_notfound if you do not want this functionality. 
 
 Only use the "title:true" option with a setup for 1 indicator. This will put everything in the title section of a 
-discord message and will use title_indicator_template for creating the message. You can use name_message to have some data 
-in the name field of the discord message when using only the title. If no template is provided, it will just use the title. 
+discord message and will use title_indicator_template for creating the message. 
+You can use name_message to have data in the name field of the discord message, this defaults to the indicator name. 
 
 ```
 # setup for discordbot

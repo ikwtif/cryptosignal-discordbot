@@ -247,11 +247,12 @@ async def parse_message(messages, fh):
         else:
             for data in messages:
                 signal = data['indicator']
+                message_title = _name_message_templater({**data, **data['analysis'].get('config')})
                 use = config_find(to_check=indicator, to_find=signal, channel=channel)
                 if use:
                     data_indicator = indicator_data(data)
                     message = _indicator_message_templater(data_indicator)
-                    to_send.add_field(name=signal, value=message, inline=False)
+                    to_send.add_field(name=message_title, value=message, inline=False)
             discord_messages.append((channel, to_send))
     # }
 
