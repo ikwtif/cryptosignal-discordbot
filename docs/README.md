@@ -154,7 +154,7 @@ values | candle_period | period_count| status | last_status | hot_label | cold_l
 title_indicator_template: 
 everything mentioned
 
-name_template:
+name_message_template:
 everything mentioned
 
 ```
