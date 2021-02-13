@@ -32,9 +32,10 @@ loglevel = configuration.settings.get('loglevel')
 if loglevel:
     if loglevel == 'info':
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
-        logging.info('set to info')
+        logging.info('logging set to info')
     elif loglevel == 'debug':
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
+        logging.info('logging set to debug')
 
 
 # {
