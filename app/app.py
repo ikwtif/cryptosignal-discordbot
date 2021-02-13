@@ -17,14 +17,14 @@ from discord.ext import commands
 import logging
 
 # TODO - fix docker setup
-
 # # monkey patch du to 3.8 breaking change for tornado
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # {
 # loading config
-configuration = Configuration()
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
+configuration = Configuration(logging)
 # }
 
 # logging setup
@@ -32,10 +32,10 @@ loglevel = configuration.settings.get('loglevel')
 if loglevel:
     if loglevel == 'info':
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
+        logging.info('set to info')
     elif loglevel == 'debug':
         logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
-else:
-    logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
+
 
 # {
 # bot setup

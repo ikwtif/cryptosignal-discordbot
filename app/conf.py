@@ -10,7 +10,7 @@ class Configuration:
     """Parses the environment configuration to create the config objects.
     """
 
-    def __init__(self):
+    def __init__(self, logging):
         """Initializes the Configuration class
         """
         logging.info('loading configuration file')
