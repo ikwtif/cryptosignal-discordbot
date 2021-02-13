@@ -226,9 +226,6 @@ async def parse_message(messages, fh):
         logging.info(f'preparing message for channel {channel}')
         data_title = title_data(messages)
         indicator = channel.get('indicator')
-        title = _title_message_templater(data_title)
-        to_send = discord.Embed(title=title,
-                                type="rich")
         if channel.get('title'):
             for data in messages:
                 signal = data['indicator']
@@ -245,6 +242,9 @@ async def parse_message(messages, fh):
                     discord_messages.append((channel, to_send))
                     break
         else:
+            title = _title_message_templater(data_title)
+            to_send = discord.Embed(title=title,
+                                    type="rich")
             for data in messages:
                 signal = data['indicator']
                 message_title = _name_message_templater({**data, **data['analysis'].get('config')})
