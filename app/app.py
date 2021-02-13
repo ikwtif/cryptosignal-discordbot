@@ -229,7 +229,9 @@ async def parse_message(messages, fh):
                         title = _template_parser(data_total, channel_template, 'title')
                         to_send = discord.Embed(title=title,
                                                 type="rich")
-                        if configuration.messages.get('name'):
+                        if not channel_template:
+                            channel_template = 'default'
+                        if configuration.messages[channel_template].get('name'):
                             name = _template_parser({**data, **data['analysis'].get('config')}, channel_template, 'name')
                             value = _template_parser({**data, **data['analysis'].get('config')}, channel_template, 'value')
                             to_send.add_field(name=name, value=value, inline=False)
