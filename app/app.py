@@ -76,17 +76,16 @@ def _find_number(prices, text):
     return f.group(1)
 
 
-def _title_message_templater(data):
-    message_template = Template(configuration.message['title_template'])
+def _template_parser(data, template, part):
+    try:
+        template = configuration.messages[template].get(part)
+    except KeyError:
+        template = configuration.messages['default'].get(part)
+        logging.info(f'{template} not found, using default template')
+    message_template = Template(template)
     new_title = str()
     new_title += message_template.render(**data)
     return new_title
-
-def _name_message_templater(data):
-    name_template = Template(configuration.message['name_message_template'])
-    new_name =str()
-    new_name += name_template.render(**data)
-    return new_name
 
 
 def save_content(messages):
@@ -95,18 +94,6 @@ def save_content(messages):
     with open(f'{filename}.txt', 'w+') as out:
         out.write(messages)
         logging.info(f'printing message recieved and saved in {filename}.txt')
-
-def _title_indicator_message_templater(data):
-    message_template = Template(configuration.message['title_indicator_template'])
-    new_message = str()
-    new_message += message_template.render(**data)
-    return new_message
-
-def _indicator_message_templater(data):
-    message_template = Template(configuration.message['indicator_template'])
-    new_message = str()
-    new_message += message_template.render(**data)
-    return new_message
 
 
 def title_data(messages):
@@ -227,34 +214,42 @@ async def parse_message(messages, fh):
         logging.info(f'preparing message for channel {channel}')
         data_title = title_data(messages)
         indicator = channel.get('indicator')
-        if channel.get('title'):
-            for data in messages:
-                signal = data['indicator']
-                logging.info(f'matching {signal} with channel indicator {indicator}')
-                if signal == indicator:
-                    data_indicator = indicator_data(messages[0])
-                    data_total = {**data_title, **data_indicator}
-                    title = _title_indicator_message_templater(data_total)
-                    to_send = discord.Embed(title=title,
-                                            type="rich")
-                    if configuration.message.get('name_message_template'):
-                        message_title = _name_message_templater({**data, **data['analysis'].get('config')})
-                        to_send.add_field(name=message_title, value='.', inline=False)
-                    discord_messages.append((channel, to_send))
-                    break
+        if channel.get('title_indicator'):
+            logging.info('Setup for using indicator information in the title')
+            if indicator == 'all' or isinstance(indicator, list):
+                raise Exception(f'If indicator information is used in a title it should have only one indicator in the setup')
+            else:
+                channel_template = channel.get('message')
+                for data in messages:
+                    signal = data['indicator']
+                    logging.info(f'matching {signal} with channel indicator {indicator}')
+                    if signal == indicator:
+                        data_indicator = indicator_data(messages[0])
+                        data_total = {**data_title, **data_indicator}
+                        title = _template_parser(data_total, channel_template, 'title')
+                        to_send = discord.Embed(title=title,
+                                                type="rich")
+                        if configuration.messages.get('name'):
+                            name = _template_parser({**data, **data['analysis'].get('config')}, channel_template, 'name')
+                            value = _template_parser({**data, **data['analysis'].get('config')}, channel_template, 'value')
+                            to_send.add_field(name=name, value=value, inline=False)
+                        discord_messages.append((channel, to_send))
+                        break
         else:
-            title = _title_message_templater(data_title)
+            channel_template = channel.get('message')
+            title = _template_parser(data_title, channel_template, 'title')
             to_send = discord.Embed(title=title,
                                     type="rich")
             for data in messages:
                 signal = data['indicator']
-                message_title = _name_message_templater({**data, **data['analysis'].get('config')})
+                name = _template_parser({**data, **data['analysis'].get('config')}, channel_template, 'name')
                 use = config_find(to_check=indicator, to_find=signal, channel=channel)
                 if use:
                     data_indicator = indicator_data(data)
-                    message = _indicator_message_templater(data_indicator)
-                    to_send.add_field(name=message_title, value=message, inline=False)
+                    value = _template_parser(data_indicator, channel_template, 'value')
+                    to_send.add_field(name=name, value=value, inline=False)
             discord_messages.append((channel, to_send))
+
     # }
 
     # {

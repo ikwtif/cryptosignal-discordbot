@@ -25,12 +25,12 @@ class Configuration:
         self.settings = user_config.get('settings')
         self.discordbot = user_config.get('discordbot')
         self.docker = user_config.get('docker')
-        self.message = user_config.get('message')
+        self.messages = user_config.get('messages')
         if not self.settings:
             logging.info('Missing settings, using defaults')
         if not self.discordbot:
             raise Exception('Missing discordbot setup')
         if not self.docker:
             logging.info('Missing settings for docker, no problem, is not used')
-        if not self.message:
+        if not self.messages:
             raise Exception('Missing settings for message template')

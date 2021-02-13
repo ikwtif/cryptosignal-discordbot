@@ -34,6 +34,7 @@ discordbot:
         - macd
         - ichimoku
       charts: true
+      template: default
     channel_3:
       id: channel_id
       base_currency: all
@@ -42,7 +43,8 @@ discordbot:
       indicator:
         - momentum
       charts: false
-      title: true
+      title_indicator: true
+      message: title
   channel_notfound:
     # used when a channel is not found for a token/indicator
     id: channel_id
@@ -51,23 +53,23 @@ discordbot:
     candle_period: all
     indicator: all
 
-message:
-  title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
-                  {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
-                  {{ '\n' -}} {{date}}
-                  {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}"
-  indicator_template: "value: {{values}}
-                      {{ '\n' -}} status: {{status}}
-                      {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
-  title_indicator_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
-                             {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
-                             {{ '\n' -}} {{date}}
-                             {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}
-                             {{ '\n' -}} value: {{values}}
-                             {{ '\n' -}} status: {{status}}
-                             {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                             {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
-  name_message_template: "{{indicator}}"
-
-        
+messages:
+  default:
+    title: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+            {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+            {{ '\n' -}} {{date}}
+            {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}"
+    name: "{{indicator}}"
+    value: "value: {{values}}
+            {{ '\n' -}} status: {{status}}
+            {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+            {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+  title:
+    title: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+            {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+            {{ '\n' -}} {{date}}
+            {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}
+            {{ '\n' -}} value: {{values}}
+            {{ '\n' -}} status: {{status}}
+            {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+            {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"

@@ -62,102 +62,110 @@ notifiers:
 Create your own configuration file called `configBot.yml` for use with the app.
 See the `configBotDefault.yml` file for a full example configuration file. 
 
-The app allows you to set up different discord channels. 
-You can define multiple combinations of base currency/quote currency/indicators/candle_periods for one channel,
-`all` means any go. Use the naming scheme as defined by crypto-signal, they should match. 
-For candle periods, If you want to use weeks and months, see this PR for crypto-signal:https://github.com/CryptoSignal/Crypto-Signal/pull/393 
+##### Setup Discordbot
 
-Every name for a channel, except channel_notfound (ex. `channel_1`) should be unique but can be custom.
-You can leave out channel_notfound if you do not want this functionality. 
-
-Only use the "title:true" option with a setup for 1 indicator. This will put everything in the title section of a 
-discord message and will use title_indicator_template for creating the message. 
-You can use name_message to have data in the name field of the discord message, this defaults to the indicator name. 
+- charts: define whether or not you want to post charts with the messages (make sure crypto-signal has charts on as well). 
+You can individually toggle these in the channels as well.
+- token: requires your discord bot token
+- channels: here you define the channels from the discord server you want to send the messages to 
 
 ```
 # setup for discordbot
 discordbot:
-  charts: false
-  # true -> posts charts in all channels or define "charts:false" in the channel where you do not want charts to be posted
-  # false -> you can still define "charts:true" per channel
-  token: discordbot_token
+  charts:
+  token: 
   channels:
-    channel_1:
-      id: channel_id
-      base_currency: ETH
-      quote_currency:
-        - USDT
-        - BTC
-      candle_period: all
-      indicator: all
-    channel_2:
-      id: channel_id
-      base_currency: all
-      quote_currency: all
-      candle_period: all
-      indicator:
-        - momentum
-        - bollinger
-        - macd
-        - ichimoku
-      charts: true
-    channel_3:
-      id: channel_id
-      base_currency: all
-      quote_currency: all
-      candle_period: all
-      indicator:
-        - momentum
-      charts: false
-      title: true
-  channel_notfound:
-    # used when a channel is not found for a token/indicator
-    id: channel_id
-    base_currency: all
-    quote_currency: all
-    candle_period: all
-    indicator: all
 ```
 
-Messages use Jinja2 templating, see the example.
+##### Channels
+The app allows you to set up different discord channels. 
+You can define multiple combinations of base currency / quote currency / indicators / candle_periods for one channel,
+if you use `all`, that means every indicator crypto-signal sends gets used. Use the naming scheme as defined by crypto-signal, they should match. 
+For candle periods, If you want to use weeks and months, see this PR for crypto-signal:https://github.com/CryptoSignal/Crypto-Signal/pull/393 
+
+Every name for a channel, except channel_notfound (ex. `channel_1`) should be unique but can be custom.
+You can leave out channel_notfound if you do not want this functionality, this is used for posting a message to discord if a channel is not found and can be used for testing.
+
+The configuration "title_indicator:true" is when you want to use indicator data inside the title of a discord message, 
+this is only available when you set up only 1 indicator for the channel. You can still use the other parts of a 
+discord message.
+
+- id: your channel id from discord
+- base_currency: the base currency you want (can be one, multiple, or all)
+- quote_currency: the quote currency you want (can be one, multiple, or all)
+- candle-period: the candle period you want 
+- indicator: the indicators you want
+- message: the template you want to use (uses `default` if it's not defined)
+
+See quote_currency for how to properly define multiples, anything with multiples defined needs to follow that formatting
+
+**optional** 
+- charts: toggle charts for specific channel
+- title_indicator: for when you want indicator data used in the title of a discord message, only use this when you set up 1 indicator for the channel
+```
+channel_1:
+  id: channel_id
+  base_currency: ETH
+  quote_currency:
+    - USDT
+    - BTC
+  candle_period: all
+  indicator: all
+  charts: false
+  title_indicator: false
+  message: default
+```
+
+##### Messages
+
+Under the message section you can define templates you want to use for the discord messages. 
+
+The structure for a discord message:
+ 1. title
+ 2. 1 or more fields consisting of name and value 
+ (can be used for different indicators, unless you want indicator data in the title, which will only create 1 field)
+ 
+You can set the template for all these, they can't be empty so use a character if you don't want data in a part.
+Use these names to define the templates in the config.
 
 ```
-message:
-  title_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
-                  {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
-                  {{ '\n' -}} {{date}}
-                  {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}"
-  indicator_template: "value: {{values}}
-                      {{ '\n' -}} status: {{status}}
-                      {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                      {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
-  title_indicator_template: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
-                             {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
-                             {{ '\n' -}} {{date}}
-                             {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}
-                             {{ '\n' -}} value: {{values}}
-                             {{ '\n' -}} status: {{status}}
-                             {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
-                             {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
-  name_message_template: "{{indicator}}"
+{message title}
+[title]
+---------------
+{message}
+[name]
+[value]
+```
+a template setup should look like this, with default being the name of the template, which you can define in a channel
+Messages use Jinja2 templating.
+``` 
+messages:
+  default:
+    title: "{{base_currency}}, {{quote_currency}}, {{market}}, {{exchange}} {{candle_period}}
+            {{ '\n' -}} High: {{price_high}}, Low: {{price_low}}, Close: {{price_close}}
+            {{ '\n' -}} {{date}}
+            {{ '\n' -}} https://tradingview.com/symbols/{{base_currency}}{{quote_currency}}"
+    name: "{{indicator}}"
+    value: "value: {{values}}
+            {{ '\n' -}} status: {{status}}
+            {%- if status == 'hot' %} :rocket: {%- else %} :cry: {%- endif -%}
+            {%- if period_count -%} {{ '\n' -}} period: {{period_count}} {%- endif -%}"
+```
 
+##### Current Options for Jinja2 template
 ```
-##### Current Options
-```
-title template:
+title:
 base_currency | quote_currency | candle_period | market | date | exchange | prices| price_high | 
 price_low | price_close | candle_period | period_count
 
-indicator template:
+value: (+ what's in title)
 values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label | hot_cold_label
 
-title_indicator_template: 
-everything mentioned
-
-name_message_template:
-everything mentioned
-
+name: (+ what's in title)
+values | candle_period | period_count| status | last_status | hot_label | cold_label | indicator_label | hot_cold_label
 ```
+
+if you set up `title_indicator:true` in a channel you can use everything in the title setup as well.
 
 ### Prerequisites
 
