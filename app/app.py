@@ -261,6 +261,7 @@ async def parse_message(messages, fh):
         for message in discord_messages:
             channel = message[0]
             to_send = message[1]
+            to_send.timestamp = datetime.utcnow()
             logging.info(f'message being prepared {channel}, {to_send}')
             # {
             # check for chart
