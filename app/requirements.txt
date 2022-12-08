@@ -2,7 +2,7 @@ aiodocker==0.14.0
 aiohttp==3.7.3
 async-timeout==3.0.1
 attrs==19.1.0
-certifi==2019.3.9
+certifi==2022.12.7
 chardet==3.0.4
 discord.py==1.6.0
 docker==3.7.2
